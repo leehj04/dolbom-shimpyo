@@ -19,7 +19,8 @@ type Caregiver = {
   max_care_level: number | null
   birth_date: string | null
   photo_url: string | null
-  profiles: { name: string; region: string | null } | null
+  service_areas: string[] | null
+  profiles: { name: string } | null
 }
 
 export default function CaregiverListPage() {
@@ -71,11 +72,26 @@ function CaregiverListInner() {
       elderData.elder_assessments?.find((a) => a.is_current) ?? elderData.elder_assessments?.[0]
     const level = current?.level ?? 1
 
-    const { data: caregiverData, error: caregiverError } = await supabase
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
+    const { data: myProfile } = user
+      ? await supabase.from('profiles').select('region').eq('id', user.id).single()
+      : { data: null }
+
+    let query = supabase
       .from('caregiver_profiles')
-      .select('profile_id, career_years, dementia_cert, max_care_level, birth_date, photo_url, profiles(name, region)')
+      .select(
+        'profile_id, career_years, dementia_cert, max_care_level, birth_date, photo_url, service_areas, profiles(name)'
+      )
       .eq('status', 'approved')
       .gte('max_care_level', level)
+
+    if (myProfile?.region) {
+      query = query.contains('service_areas', [myProfile.region])
+    }
+
+    const { data: caregiverData, error: caregiverError } = await query
 
     if (caregiverError) {
       setError(caregiverError.message)
@@ -137,7 +153,7 @@ function CaregiverListInner() {
                   </div>
                   <p className="mt-0.5 text-xs text-neutral-500">
                     {age !== null ? `${age}세 · ` : ''}
-                    경력 {c.career_years ?? 0}년 · {c.profiles?.region ?? '지역 미입력'}
+                    경력 {c.career_years ?? 0}년 · {c.service_areas?.join(', ') || '활동 지역 미입력'}
                   </p>
                   <p className="mt-1 text-xs text-neutral-400">
                     최대 {c.max_care_level}단계까지 돌봄 가능

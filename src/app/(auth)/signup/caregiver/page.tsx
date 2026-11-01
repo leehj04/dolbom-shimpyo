@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
+import { SEOUL_DISTRICTS } from '@/lib/seoulDistricts'
 
 export default function CaregiverSignup() {
   const router = useRouter()
@@ -10,7 +11,7 @@ export default function CaregiverSignup() {
   const [form, setForm] = useState({
     name: '',
     phone: '',
-    region: '',
+    serviceAreas: [] as string[],
     careerYears: '',
     dementiaCert: false,
     email: '',
@@ -19,8 +20,21 @@ export default function CaregiverSignup() {
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
 
+  function toggleArea(d: string) {
+    setForm((prev) => ({
+      ...prev,
+      serviceAreas: prev.serviceAreas.includes(d)
+        ? prev.serviceAreas.filter((x) => x !== d)
+        : [...prev.serviceAreas, d],
+    }))
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
+    if (form.serviceAreas.length === 0) {
+      setError('활동 가능한 구를 하나 이상 선택해주세요.')
+      return
+    }
     setLoading(true)
     setError(null)
 
@@ -32,7 +46,8 @@ export default function CaregiverSignup() {
           role: 'caregiver',
           name: form.name,
           phone: form.phone,
-          region: form.region,
+          region: form.serviceAreas[0],
+          service_areas: form.serviceAreas,
           career_years: Number(form.careerYears) || 0,
           dementia_cert: form.dementiaCert,
         },
@@ -79,14 +94,23 @@ export default function CaregiverSignup() {
             onChange={(e) => setForm({ ...form, phone: e.target.value })}
           />
         </Field>
-        <Field label="활동 지역">
-          <input
-            required
-            placeholder="예: 강북구"
-            className="input"
-            value={form.region}
-            onChange={(e) => setForm({ ...form, region: e.target.value })}
-          />
+        <Field label="활동 가능 지역" hint="돌봄이 가능한 구를 모두 선택해주세요 (복수 선택 가능)">
+          <div className="flex flex-wrap gap-2">
+            {SEOUL_DISTRICTS.map((d) => (
+              <button
+                key={d}
+                type="button"
+                onClick={() => toggleArea(d)}
+                className={`rounded-full border px-3 py-1.5 text-xs transition ${
+                  form.serviceAreas.includes(d)
+                    ? 'border-neutral-900 bg-neutral-900 text-white'
+                    : 'border-neutral-200 bg-white text-neutral-600'
+                }`}
+              >
+                {d}
+              </button>
+            ))}
+          </div>
         </Field>
         <Field label="경력 연차">
           <input

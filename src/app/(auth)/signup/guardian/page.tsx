@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
+import { SEOUL_DISTRICTS } from '@/lib/seoulDistricts'
 
 export default function GuardianSignup() {
   const router = useRouter()
@@ -66,14 +67,22 @@ export default function GuardianSignup() {
             onChange={(e) => setForm({ ...form, phone: e.target.value })}
           />
         </Field>
-        <Field label="거주 지역">
-          <input
+        <Field label="거주 지역" hint="서울 전역에서만 서비스를 제공해요">
+          <select
             required
-            placeholder="예: 강북구"
             className="input"
             value={form.region}
             onChange={(e) => setForm({ ...form, region: e.target.value })}
-          />
+          >
+            <option value="" disabled>
+              구를 선택해주세요
+            </option>
+            {SEOUL_DISTRICTS.map((d) => (
+              <option key={d} value={d}>
+                {d}
+              </option>
+            ))}
+          </select>
         </Field>
         <Field label="이메일">
           <input
