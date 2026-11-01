@@ -115,7 +115,7 @@ export default function CaregiverSignup() {
             onChange={(e) => setForm({ ...form, email: e.target.value })}
           />
         </Field>
-        <Field label="비밀번호">
+        <Field label="비밀번호" hint="8자 이상 입력해주세요">
           <input
             required
             type="password"
@@ -139,10 +139,19 @@ export default function CaregiverSignup() {
   )
 }
 
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
+function Field({
+  label,
+  hint,
+  children,
+}: {
+  label: string
+  hint?: string
+  children: React.ReactNode
+}) {
   return (
     <label className="flex flex-col gap-1.5 text-sm">
       <span className="text-neutral-500">{label}</span>
+      {hint && <span className="-mt-1 text-xs text-neutral-400">{hint}</span>}
       {children}
     </label>
   )
