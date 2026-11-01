@@ -19,6 +19,14 @@ export default function GuardianSignup() {
     const { data, error: signUpError } = await supabase.auth.signUp({
       email: form.email,
       password: form.password,
+      options: {
+        data: {
+          role: 'guardian',
+          name: form.name,
+          phone: form.phone,
+          region: form.region,
+        },
+      },
     })
     if (signUpError || !data.user) {
       setError(signUpError?.message ?? '가입에 실패했습니다.')
@@ -26,22 +34,12 @@ export default function GuardianSignup() {
       return
     }
 
-    const { error: profileError } = await supabase.from('profiles').insert({
-      id: data.user.id,
-      role: 'guardian',
-      name: form.name,
-      phone: form.phone,
-      region: form.region,
-      consent_at: new Date().toISOString(),
-      consent_version: 'v1',
-    })
-    if (profileError) {
-      setError(profileError.message)
-      setLoading(false)
+    // profiles/guardian_profiles는 DB 트리거(handle_new_user)가 자동 생성합니다.
+    if (!data.session) {
+      // 이메일 인증이 켜져 있는 경우: 바로 로그인되지 않으므로 안내 후 로그인 화면으로
+      router.push('/login?justSignedUp=1')
       return
     }
-
-    await supabase.from('guardian_profiles').insert({ profile_id: data.user.id })
 
     router.push('/guardian')
   }

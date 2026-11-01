@@ -27,6 +27,16 @@ export default function CaregiverSignup() {
     const { data, error: signUpError } = await supabase.auth.signUp({
       email: form.email,
       password: form.password,
+      options: {
+        data: {
+          role: 'caregiver',
+          name: form.name,
+          phone: form.phone,
+          region: form.region,
+          career_years: Number(form.careerYears) || 0,
+          dementia_cert: form.dementiaCert,
+        },
+      },
     })
     if (signUpError || !data.user) {
       setError(signUpError?.message ?? '가입에 실패했습니다.')
@@ -34,28 +44,12 @@ export default function CaregiverSignup() {
       return
     }
 
-    const { error: profileError } = await supabase.from('profiles').insert({
-      id: data.user.id,
-      role: 'caregiver',
-      name: form.name,
-      phone: form.phone,
-      region: form.region,
-      consent_at: new Date().toISOString(),
-      consent_version: 'v1',
-    })
-    if (profileError) {
-      setError(profileError.message)
-      setLoading(false)
+    // profiles/caregiver_profiles(status: pending)는 DB 트리거(handle_new_user)가 자동 생성합니다.
+    if (!data.session) {
+      // 이메일 인증이 켜져 있는 경우: 바로 로그인되지 않으므로 안내 후 로그인 화면으로
+      router.push('/login?justSignedUp=1')
       return
     }
-
-    // 시범사업 참여 승인 전까지는 status = 'pending' (요청을 받을 수 없음)
-    await supabase.from('caregiver_profiles').insert({
-      profile_id: data.user.id,
-      career_years: Number(form.careerYears) || 0,
-      dementia_cert: form.dementiaCert,
-      status: 'pending',
-    })
 
     router.push('/caregiver')
   }

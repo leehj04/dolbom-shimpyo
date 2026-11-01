@@ -1,12 +1,22 @@
 'use client'
 
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { Suspense, useState } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 
 export default function LoginPage() {
+  return (
+    <Suspense fallback={null}>
+      <LoginPageInner />
+    </Suspense>
+  )
+}
+
+function LoginPageInner() {
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const justSignedUp = searchParams.get('justSignedUp') === '1'
   const supabase = createClient()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -38,6 +48,12 @@ export default function LoginPage() {
     <main className="mx-auto flex min-h-screen max-w-sm flex-col justify-center px-6">
       <p className="text-xs tracking-wide text-neutral-400">돌봄쉼표</p>
       <h1 className="mt-1 text-xl font-semibold">로그인</h1>
+
+      {justSignedUp && (
+        <p className="mt-4 rounded-xl bg-amber-50 p-3 text-sm text-amber-800">
+          가입이 완료됐어요. 이메일로 받은 인증 링크를 눌러 확인한 뒤 로그인해주세요.
+        </p>
+      )}
 
       <form onSubmit={handleSubmit} className="mt-6 flex flex-col gap-4">
         <input
